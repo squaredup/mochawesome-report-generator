@@ -7,8 +7,8 @@ import styles from './test.css';
 
 const cx = classNames.bind(styles);
 
-const videoRegEx = /(mp4|webm)$/i;
-const imgRegEx = /(?:png|jpe?g|gif)$/i;
+const videoRegEx = /(mp4|webm)$|^(?:(?:https?|ftp)).*(?:mp4|webm).*/i;
+const imgRegEx = /(?:png|jpe?g|gif)$|^(?:(?:https?|ftp)).*(?:png|jpe?g|gif).*/i;
 const protocolRegEx = /^(?:(?:https?|ftp):\/\/)/i;
 const urlRegEx = /^(?:(?:https?|ftp):\/\/)?(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,}))\.?)(?::\d{2,5})?(?:[/?#]\S*)?$/; // eslint-disable-line
 const base64ImgRegEx = /^data:image\/([a-zA-Z0-9-_.])+;base64,([^"]*)$/i;
@@ -21,7 +21,7 @@ const getVideoType = str => {
 
   const hashIndex = str.indexOf('#');
 
-  const [, type] =
+  const [type] =
     videoRegEx.exec(hashIndex > 0 ? str.slice(0, hashIndex) : str) ||
     base64VidRegEx.exec(str) ||
     [];
@@ -40,26 +40,25 @@ class TestContext extends Component {
     ]),
   };
 
-  renderVideo = (ctx, title, type) => {
+  // eslint-disable-next-line no-unused-vars
+  renderVideo = (ctx, title,type) => {
     const isUrl = urlRegEx.test(ctx);
     const hasProtocol = protocolRegEx.test(ctx);
     const linkUrl = isUrl && !hasProtocol ? `http://${ctx}` : ctx;
 
     return (
-      <video controls className={cx('video')}>
-        <source type={`video/${type}`} src={linkUrl} />
-        <track kind="captions" />
-        {title}
-        {isUrl && (
-          <a
+      <a
             href={linkUrl}
             className={cx('video-link')}
             rel="noopener noreferrer"
-            target="_blank">
-            {linkUrl}
-          </a>
-        )}
-      </video>
+            target="_blank">      
+        <video controls className={cx('video')}>
+            <source type='video/mp4' src={linkUrl} />
+            <track kind="captions" />
+            {title}
+            {isUrl}
+            </video>
+      </a>
     );
   };
 
@@ -84,6 +83,26 @@ class TestContext extends Component {
 
   renderLink = (url, title) => {
     const linkUrl = `${protocolRegEx.test(url) ? '' : 'http://'}${url}`;
+    if(url.includes('.html'))
+    {
+      return (
+        <a
+          href={linkUrl}
+          className={cx('text-link')}
+          rel="noopener noreferrer"
+          target="_blank"
+          alt={title}>
+            <iframe 
+              src={linkUrl}
+              width='1100px'
+              height='800px'
+              alt={title}
+              title={title}>
+              {url}
+              </iframe>          
+        </a>
+      );
+    }
     return (
       <a
         href={linkUrl}
